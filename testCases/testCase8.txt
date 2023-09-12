@@ -1,0 +1,17 @@
+type Person is record
+	var name: string
+    	var age: integer
+end
+
+var person1: Person
+var person2: Person
+var person3: Person
+
+routine main():
+	person1.name := "Dariya"
+    	person1.age := 19
+	person2.name := "Murat"
+    	person2.age := 20
+    	person3.name := "Mariya"
+    	person3.age :=20
+end

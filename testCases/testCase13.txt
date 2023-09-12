@@ -1,0 +1,15 @@
+var arr: array[1..10] integer is [5, 12, 7, 3, 9, 22, 14, 6, 17, 8]
+var target: integer is 22
+var found: boolean is false
+
+routine linearSearch(): is
+    	for i in 1..10 loop
+        	if arr[i] = target then
+            	found := true
+            	return
+        	end
+    	end
+
+routine main():
+    	linearSearch()
+end

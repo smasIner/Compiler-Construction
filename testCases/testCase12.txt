@@ -1,0 +1,28 @@
+var listWithBinaryt: array[8] integer is [1, 0, 1, 1, 0, 0, 1, 0]
+var isCountOdd: boolean is false
+var countOnes: integer is 0
+var i: integer
+
+routine isEven(num: integer): boolean is
+	return num % 2 = 0
+end
+
+routine countOnesInBinaryList(arr: array[8] integer) returns integer is
+    	var count: integer is 0
+    	var i: integer
+    	for i in 1..8 loop
+        	count := count + arr[i]
+    	end
+    	return count
+end
+
+
+routine main():
+    	countOnes := countOnesInBinaryList(listWithBinary)
+    
+    	if isEven(countOnes) xor true then
+        isCountOdd := true
+    	else
+        	isCountOdd := false
+    	end
+end

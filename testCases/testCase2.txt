@@ -1,0 +1,7 @@
+var a: integer is 10
+var b: integer is 5
+var result: integer
+
+routine main():
+	result := a + b
+end

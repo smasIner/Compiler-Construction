@@ -1,0 +1,21 @@
+var n: integer is 20
+var isPrimeArray: array[1..20] boolean
+
+routine isPrime(num: integer): boolean is
+	var i: integer
+	if num <= 1 then
+        	return false
+    	end
+    	for i in 2..(num - 1) loop
+        	if num % i = 0 then
+            	return false
+        	end
+    	end
+	return true
+end
+
+routine main():
+	for i in 1..n loop
+		isPrimeArray := isPrime(i)       
+        end
+end

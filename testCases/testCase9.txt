@@ -1,0 +1,8 @@
+var numbers: array[1..5] integer is [5, 3, 8, 2, 1]
+var sum: integer is 0
+
+routine main():
+    	for i in 1..5 loop
+        	sum := sum + numbers[i]
+    	end
+end

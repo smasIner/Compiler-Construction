@@ -1,0 +1,13 @@
+routine factorial(n: integer): integer is
+    	if n = 0 then
+        	return 1
+    	else
+        	return n * factorial(n - 1)
+    	end
+end
+
+routine main():
+	var n: integer is 5
+    	var result: integer
+    	result := factorial(n)
+end

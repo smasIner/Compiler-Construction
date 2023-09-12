@@ -1,0 +1,16 @@
+var n: integer is 5
+var arr: array[5] integer is [5, 2, 9, 1, 5]
+
+routine main(arr: array[5] integer):
+    	var i, j: integer
+    	var temp: integer
+    	for i in 1..n loop
+        	for j in 1..n-i loop
+            	if arr[j] > arr[j+1] then
+                	temp := arr[j]
+                	arr[j] := arr[j+1]
+                	arr[j+1] := temp
+            	end
+        	end
+    	end
+end

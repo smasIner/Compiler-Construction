@@ -1,0 +1,10 @@
+var temperature: real is 25.5
+var hot: boolean
+
+routine main():
+	if temperature > 30.0 then
+		hot:=1
+    	else
+       		hot:=0
+    	end
+end

@@ -1,0 +1,38 @@
+var arr: array[10] integer is [7, 3, 9, 1, 5, 8, 6, 2, 4, 10]
+
+routine quickSort(arr: array[10] integer, low: integer, high: integer) is
+    	var i, j, pivot, temp: integer
+    
+    	if low < high then
+        	pivot := low
+        	i := low
+        	j := high
+        
+        	while i < j loop
+            	while arr[i] <= arr[pivot] and i < high loop
+                	i := i + 1
+            	end
+            
+            	while arr[j] > arr[pivot] loop
+                	j := j - 1
+            	end
+            
+            	if i < j then
+                	temp := arr[i]
+                	arr[i] := arr[j]
+                	arr[j] := temp
+            	end
+        	end
+        
+        	temp := arr[pivot]
+        	arr[pivot] := arr[j]
+        	arr[j] := temp
+        
+        	quickSort(arr, low, j - 1)
+        	quickSort(arr, j + 1, high)
+    	end
+end
+
+routine main():
+	quickSort(arr, 1, 10)
+end
