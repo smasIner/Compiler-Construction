@@ -1,10 +1,11 @@
-var temperature: real is 25.5
+var temperature: real is 29.0
 var hot: boolean
 
-routine main():
-	if temperature > 30.0 then
-		hot:=1
+routine main() is
+	if temperature < 30.0 then
+		hot := 1
     	else
-       		hot:=0
+       		hot := 0
     	end
 end
+

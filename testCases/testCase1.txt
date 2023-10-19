@@ -1,9 +1,10 @@
 var firstInteger: integer is 5
 var secondInteger: integer is 10
 
-routine main():
+routine main() is
 	if firstInteger>secondInteger then
 		secondInteger := firstInteger
 	else
 		firstInteger := secondInteger
+    end
 end

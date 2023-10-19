@@ -1,7 +1,7 @@
 var n: integer is 5
 var factorial: integer is 1
 
-routine main():
+routine main() is
 	for i in 1..n loop
         	factorial := factorial * i
     	end

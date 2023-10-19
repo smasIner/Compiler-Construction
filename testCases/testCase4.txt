@@ -1,6 +1,6 @@
 var count: integer is 1
 
-routine main():
+routine main() is
 	while count <= 5 loop
         	count := count + 1
     	end

@@ -7,7 +7,7 @@ routine isEven(num: integer): boolean is
 	return num % 2 = 0
 end
 
-routine countOnesInBinaryList(arr: array[8] integer) returns integer is
+routine countOnesInBinaryList(arr: array[8] integer) : integer is
     	var count: integer is 0
     	var i: integer
     	for i in 1..8 loop
@@ -17,7 +17,7 @@ routine countOnesInBinaryList(arr: array[8] integer) returns integer is
 end
 
 
-routine main():
+routine main() is
     	countOnes := countOnesInBinaryList(listWithBinary)
     
     	if isEven(countOnes) xor true then

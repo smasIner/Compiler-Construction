@@ -33,6 +33,6 @@ routine quickSort(arr: array[10] integer, low: integer, high: integer) is
     	end
 end
 
-routine main():
+routine main() is
 	quickSort(arr, 1, 10)
 end

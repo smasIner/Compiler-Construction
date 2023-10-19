@@ -7,7 +7,7 @@ var person1: Person
 var person2: Person
 var person3: Person
 
-routine main():
+routine main() is
 	person1.name := "Dariya"
     	person1.age := 19
 	person2.name := "Murat"

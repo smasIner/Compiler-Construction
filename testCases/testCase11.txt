@@ -1,13 +1,13 @@
 var n: integer is 10
-var fibonacci: array[1..10] integer
+var fibonacci: array[10] integer
 
-routine generateFibonacci(): is
+routine generateFibonacci() is
     	fibonacci[1] := 0
     	fibonacci[2] := 1
     	for i in 3..n loop
         	fibonacci[i] := fibonacci[i - 1] + fibonacci[i - 2]
 	 end
 
-routine main():
+routine main() is
     	generateFibonacci()
 end

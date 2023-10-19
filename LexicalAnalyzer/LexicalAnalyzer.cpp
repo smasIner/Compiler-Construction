@@ -10,12 +10,18 @@
 
 // Token type enumeration
 enum TokenType {
+    //0-10
     VAR, TYPE, ROUTINE, RECORD, ARRAY, INTEGER, REAL, BOOLEAN, TRUE, FALSE, WHILE,
+    //11-24
     LOOP, END, IF, THEN, ELSE, FOR, IN, REVERSE, AND, OR, XOR, NOT, COLON, EQUALS,
+    //25-29
     NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL,
+    //30-38
     DIVIDE, MODULO, MULTIPLY, ADD, SUBTRACT, RANGE, IS, ACCESS_RECORD, INTEGER_LITERAL,
+    //39-44
     REAL_LITERAL, BOOLEAN_LITERAL, IDENTIFIER, LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE,
-    RIGHT_BRACE, LEFT_BRACKET, RIGHT_BRACKET, COMMA, INVALID_CHARACTER, END_OF_INPUT
+    //45-51
+    RIGHT_BRACE, LEFT_BRACKET, RIGHT_BRACKET, COMMA, INVALID_CHARACTER, END_OF_INPUT, ASSIGNMENT
 };
 
 // Token structure
@@ -37,6 +43,7 @@ std::unordered_map<std::string, TokenType> tokenMap = {
         {"true", TRUE}, {"false", FALSE}, {"while", WHILE}, {"loop", LOOP}, {"end", END},
         {"if", IF}, {"then", THEN}, {"else", ELSE}, {"for", FOR}, {"in", IN},
         {"reverse", REVERSE}, {"and", AND}, {"or", OR}, {"xor", XOR}, {"not", NOT},
+        {":=", ASSIGNMENT},
         {":", COLON}, {"=", EQUALS}, {"/=", NOT_EQUALS}, {">", GREATER_THAN},
         {">=", GREATER_THAN_OR_EQUAL}, {"<", LESS_THAN}, {"<=", LESS_THAN_OR_EQUAL},
         {"/", DIVIDE}, {"%", MODULO}, {"*", MULTIPLY}, {"+", ADD}, {"-", SUBTRACT},
@@ -82,23 +89,58 @@ std::vector<Token> tokenize(std::istream& input) {
                 continue;
             }
 
-            // Check for numeric literals
+            // Check for numeric literalsч
             if (std::isdigit(currentChar)) {
                 size_t tokenStart = currentIndex;
                 while (currentIndex < line.size() &&
-                       (std::isdigit(line[currentIndex]) || line[currentIndex] == '.')) {
+                       (std::isdigit(line[currentIndex]) or line[currentIndex]=='.')
+                       and !(line[currentIndex]=='.' and line[currentIndex+1] == '.' )) {
+                    std::cout<<line[currentIndex];
                     currentIndex++;
                 }
                 std::string literal = line.substr(tokenStart, currentIndex - tokenStart);
 
                 if (literal.find('.') != std::string::npos) {
-                    double realValue = std::stod(literal); // Convert to double
-                    tokens.push_back({REAL_LITERAL, literal, currentLine, 0, realValue});
+                        double realValue = std::stod(literal); // Convert to double
+                        tokens.push_back({REAL_LITERAL, literal, currentLine, 0, realValue});
+                    //}
                 } else {
                     int intValue = std::stoi(literal); // Convert to integer
                     tokens.push_back({INTEGER_LITERAL, literal, currentLine, intValue});
                 }
 
+                continue;
+            }
+
+            //Handle range token
+            if (currentChar == '.' && line[currentIndex + 1] == '.') {
+                std::string declaration = "..";
+                tokens.push_back({RANGE, declaration, currentLine});
+                currentIndex += 2;
+                continue;
+            }
+
+            //Handle declaration token
+            if (currentChar == ':' && line[currentIndex + 1] == '=') {
+                std::string declaration = ":=";
+                tokens.push_back({ASSIGNMENT, declaration, currentLine});
+                currentIndex += 2;
+                continue;
+            }
+
+            //Handle less than or equal token
+            if (currentChar == '<' && line[currentIndex + 1] == '=') {
+                std::string lessThanOrEqual = "<=";
+                tokens.push_back({LESS_THAN_OR_EQUAL, lessThanOrEqual, currentLine});
+                currentIndex += 2;
+                continue;
+            }
+
+            //Handle greater than or equal token
+            if (currentChar == '>' && line[currentIndex + 1] == '=') {
+                std::string greaterThanOrEqual = ">=";
+                tokens.push_back({GREATER_THAN_OR_EQUAL, greaterThanOrEqual, currentLine});
+                currentIndex += 2;
                 continue;
             }
 
@@ -124,35 +166,35 @@ std::vector<Token> tokenize(std::istream& input) {
     return tokens;
 }
 
-int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <input_file>\n";
-        return 1;
-    }
-
-    std::ifstream inputFile(argv[1]);
-    if (!inputFile) {
-        std::cerr << "Error opening input file\n";
-        return 1;
-    }
-
-    std::vector<Token> tokens = tokenize(inputFile);
-
-    for (const Token& token : tokens) {
-        std::cout << "Type: " << token.type << ", Lexeme: " << token.lexeme;
-        std::cout << ", Line: " << token.line;
-
-        // Print values for INTEGER_LITERAL, REAL_LITERAL, and BOOLEAN_LITERAL
-        if (token.type == INTEGER_LITERAL) {
-            std::cout << ", Value: " << token.intValue;
-        } else if (token.type == REAL_LITERAL) {
-            std::cout << ", Value: " << token.realValue;
-        } else if (token.type == BOOLEAN_LITERAL) {
-            std::cout << ", Value: " << (token.boolValue ? "true" : "false");
-        }
-
-        std::cout << std::endl;
-    }
-
-    return 0;
-}
+//int main(int argc, char* argv[]) {
+//    if (argc != 2) {
+//        std::cerr << "Usage: " << argv[0] << " <input_file>\n";
+//        return 1;
+//    }
+//
+//    std::ifstream inputFile(argv[1]);
+//    if (!inputFile) {
+//        std::cerr << "Error opening input file\n";
+//        return 1;
+//    }
+//
+//    std::vector<Token> tokens = tokenize(inputFile);
+//
+//    for (const Token& token : tokens) {
+//        std::cout << "Type: " << token.type << ", Lexeme: " << token.lexeme;
+//        std::cout << ", Line: " << token.line;
+//
+//        // Print values for INTEGER_LITERAL, REAL_LITERAL, and BOOLEAN_LITERAL
+//        if (token.type == INTEGER_LITERAL) {
+//            std::cout << ", Value: " << token.intValue;
+//        } else if (token.type == REAL_LITERAL) {
+//            std::cout << ", Value: " << token.realValue;
+//        } else if (token.type == BOOLEAN_LITERAL) {
+//            std::cout << ", Value: " << (token.boolValue ? "true" : "false");
+//        }
+//
+//        std::cout << std::endl;
+//    }
+//
+//    return 0;
+//}

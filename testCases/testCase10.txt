@@ -1,4 +1,4 @@
-routine factorial(n: integer): integer is
+routine factorial(n: integer) : integer is
     	if n = 0 then
         	return 1
     	else
@@ -6,7 +6,7 @@ routine factorial(n: integer): integer is
     	end
 end
 
-routine main():
+routine main() is
 	var n: integer is 5
     	var result: integer
     	result := factorial(n)

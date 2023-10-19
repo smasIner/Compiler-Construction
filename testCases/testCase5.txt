@@ -1,6 +1,6 @@
 var sum: integer
 
-routine main():
+routine main() is
 	for i in 1..5 loop
     		sum:= sum + i
     	end
