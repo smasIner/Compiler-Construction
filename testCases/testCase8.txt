@@ -1,17 +1,19 @@
-type Person is record
-	var name: string
-    	var age: integer
+type Student is record
+	var id: integer
+    var gpa: real
 end
 
-var person1: Person
-var person2: Person
-var person3: Person
+var person1: Student
+var person2: Student
+var person3: Student
 
 routine main() is
-	person1.name := "Dariya"
-    	person1.age := 19
-	person2.name := "Murat"
-    	person2.age := 20
-    	person3.name := "Mariya"
-    	person3.age :=20
+	person1.id := 0
+    person1.gpa := 4.3
+
+	person2.id := 2
+    person2.gpa := 4.8
+
+    person3.id := 1
+   	person3.gpa :=3.7
 end
