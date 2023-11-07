@@ -10,17 +10,18 @@
 
 // Token type enumeration
 enum TokenType {
-    //0-10
+    NULL_TOKEN,
+    //1-11
     VAR, TYPE, ROUTINE, RECORD, ARRAY, INTEGER, REAL, BOOLEAN, TRUE, FALSE, WHILE,
-    //11-24
+    //12-25
     LOOP, END, IF, THEN, ELSE, FOR, IN, REVERSE, AND, OR, XOR, NOT, COLON, EQUALS,
-    //25-29
+    //26-30
     NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL,
-    //30-38
+    //31-39
     DIVIDE, MODULO, MULTIPLY, ADD, SUBTRACT, RANGE, IS, ACCESS_RECORD, INTEGER_LITERAL,
-    //39-45
+    //40-46
     REAL_LITERAL, BOOLEAN_LITERAL, IDENTIFIER, LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
-    //46-52
+    //47-53
     LEFT_BRACKET, RIGHT_BRACKET, COMMA, INVALID_CHARACTER, END_OF_INPUT, ASSIGNMENT, RETURN
 };
 
@@ -89,7 +90,7 @@ std::vector<Token> tokenize(std::istream& input) {
                 continue;
             }
 
-            // Check for numeric literalsч
+            // Check for numeric literals
             if (std::isdigit(currentChar)) {
                 size_t tokenStart = currentIndex;
                 while (currentIndex < line.size() &&
