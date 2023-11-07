@@ -6,9 +6,9 @@ routine linearSearch() is
     	for i in 1..10 loop
         	if arr[i] = target then
             	found := true
-            	return
         	end
     	end
+    end
 
 routine main() is
     	linearSearch()

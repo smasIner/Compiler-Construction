@@ -8,6 +8,6 @@ end
 
 routine main() is
 	var n: integer is 5
-    	var result: integer
-    	result := factorial(n)
+    var result: integer
+    result := factorial(n)
 end

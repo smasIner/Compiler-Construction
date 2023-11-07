@@ -1,7 +1,11 @@
 var arr: array[10] integer is [7, 3, 9, 1, 5, 8, 6, 2, 4, 10]
 
 routine quickSort(arr: array[10] integer, low: integer, high: integer) is
-    	var i, j, pivot, temp: integer
+    	var i : integer
+    	var j : integer
+    	var pivot : integer
+    	var temp: integer
+
     
     	if low < high then
         	pivot := low

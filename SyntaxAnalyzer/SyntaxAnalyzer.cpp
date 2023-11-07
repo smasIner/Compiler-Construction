@@ -67,7 +67,7 @@ public:
         if (this->boolValue) {
             std::cout << "boolValue: " << (this->boolValue ? "true" : "false") << std::endl;
         }
-        for (Tree *child : this->children) {
+        for (Tree *child: this->children) {
             if (this->type != "")
                 child->print(level + 1);
             else child->print(level);
@@ -154,8 +154,7 @@ public:
                 checkToken(TokenType::LEFT_BRACKET, result);
                 result->children.push_back(parseExpression());
                 checkToken(TokenType::RIGHT_BRACKET, result);
-            }
-            else {
+            } else {
                 result->children.push_back(parseExpression());
             }
         }
@@ -165,20 +164,17 @@ public:
         while (true) {
             switch (tokens[currentToken].type) {
                 case TokenType::ROUTINE:
-                    std::cout << "parse Routine Declaration\n";
                     analyzedTree->children.push_back(parseRoutineDeclaration());
                     break;
                 case TokenType::VAR:
-                    std::cout << "parse Variable Declaration\n";
                     analyzedTree->children.push_back(parseVariableDeclaration());
                     break;
                 case TokenType::TYPE:
-                    std::cout << "parse Type Declaration\n";
                     analyzedTree->children.push_back(parseTypeDeclaration());
                     break;
                 case TokenType::END_OF_INPUT:
                     std::cout << "parse End of Input\n";
-                    return analyzedTree;//это что?
+                    return analyzedTree;
                 default:
                     std::cout << "Error: expected 'routine', 'var', 'type' or end of input, got "
                               << tokens[currentToken].lexeme << std::endl;
@@ -190,6 +186,8 @@ public:
     Tree *parseRoutineDeclaration() {
 //        RoutineDeclaration
 //        : routine Identifier '(' Parameters ')' [ ':' Type ] is Body end
+
+        std::cout << "parse Routine Declaration\n";
 
         Tree *result = new Tree("Routine Declaration");
 
@@ -211,19 +209,25 @@ public:
 //        : ParameterDeclaration { ',' ParameterDeclaration }
 //        ParameterDeclaration
 //        : Identifier : Type
+
+        std::cout << "parse Routine Parameters\n";
+
         Tree *result = new Tree("Routine Parameters");
+
         while (tokens[currentToken].type != TokenType::RIGHT_PAREN) {
             result->children.push_back(parseParameterDeclaration());
             if (tokens[currentToken].type == TokenType::COMMA) {
                 checkToken(TokenType::COMMA, result);
             }
         }
-
         return result;
 
     }
 
     Tree *parseParameterDeclaration() {
+
+        std::cout<< "parse Parameter Declaration\n";
+
         Tree *result = new Tree("Parameter Declaration");
 
         checkToken(TokenType::IDENTIFIER, result);
@@ -240,50 +244,53 @@ public:
         Tree *result = new Tree("Body");
 
         while (tokens[currentToken].type != TokenType::END and
-               (!ifBody || tokens[currentToken].type != TokenType::ELSE)) {
-            std::cout<<"parse Body\n";
+               tokens[currentToken].type != TokenType::ELSE) {
+            std::cout << tokens[currentToken].type << "\n";
+            std::cout << "parse Body\t" << (tokens[currentToken].type != TokenType::END) << "\t"
+                      << (ifBody || tokens[currentToken].type != TokenType::ELSE) << "\n";
             switch (tokens[currentToken].type) {
                 case TokenType::RETURN:
                     result->children.push_back(parseReturnStatement());
-                    std::cout << "parse Return Statement\n";
                     break;
                 case TokenType::VAR:
                     result->children.push_back(parseVariableDeclaration());
-                    std::cout << "parse Variable Declaration\n";
                     break;
                 case TokenType::TYPE:
                     result->children.push_back(parseTypeDeclaration());
-                    std::cout << "parse Type Declaration\n";
                     break;
                 default:
                     result->children.push_back(parseStatement());
-                    std::cout << "parse Statement\n";
                     break;
             }
         }
-
 
         return result;
     }
 
     Tree *parseVariableDeclaration() {
-        Tree *result = new Tree("Variable Declaration");
-        checkToken(TokenType::VAR, result);
 
+        std::cout << "parse Variable Declaration\n";
+
+        Tree *result = new Tree("Variable Declaration");
+
+        checkToken(TokenType::VAR, result);
         checkToken(TokenType::IDENTIFIER, result);
         bool typeExists = parseTypeIfExists(result);
-
         if (typeExists) {
             parseInitialValueIfExists(result);
         } else {
             checkToken(TokenType::IS, result);
             result->children.push_back(parseExpression());
         }
+
         return result;
     }
 
     Tree *parseTypeDeclaration() {
         // TypeDeclaration : type Identifier is Type
+
+        std::cout << "parse Type Declaration\n";
+
         Tree *result = new Tree("TypeDeclaration");
 
         checkToken(TokenType::TYPE, result);
@@ -295,6 +302,9 @@ public:
     }
 
     Tree *parseReturnStatement() {
+
+        std::cout << "parse Return Statement\n";
+
         Tree *result = new Tree("Return Statement");
 
         checkToken(TokenType::RETURN, result);
@@ -305,8 +315,11 @@ public:
 
     Tree *parseType() {
         // Type : PrimitiveType | UserType | Identifier
+
+        std::cout << "parse Type\n";
+
         Tree *result = new Tree("Type");
-        // if PrimitiveType
+
         switch (tokens[currentToken].type) {
             case TokenType::BOOLEAN:
                 checkToken(TokenType::BOOLEAN, result);
@@ -323,14 +336,14 @@ public:
             case TokenType::RECORD:
                 result->children.push_back(parseRecordType());
                 break;
+            case TokenType::ARRAY:
+                result->children.push_back(parseArrayType());
+                break;
             default:
-                std::cout << "Error: expected 'boolean', 'integer', 'real' or identifier, got "
+                std::cout << "Error: expected 'boolean', 'integer', 'real', identifier, record type, or array type, got "
                           << tokens[currentToken].lexeme << std::endl;
                 exit(1);
         }
-        // if UserType
-        //userType()
-        //TODO: UserType | Identifier
 
         return result;
     }
@@ -339,6 +352,9 @@ public:
 //        Statement : Assignment | RoutineCall
 //                    | WhileLoop | ForLoop
 //                    | IfStatement
+
+        std::cout << "Parse Statement\n";
+
         Tree *result = new Tree("Statement");
 
         switch (tokens[currentToken].type) {
@@ -347,22 +363,30 @@ public:
                 //RoutineCall
                 if (tokens[currentToken].type == TokenType::LEFT_PAREN) {
                     currentToken--;
-                    result->children.push_back(parseRoutineCall());
-                //Assignment
+                    checkToken(TokenType::IDENTIFIER, result);
+                    checkToken(TokenType::LEFT_PAREN, result);
+                    while (tokens[currentToken].type != TokenType::RIGHT_PAREN) {
+                        result->children.push_back(parseExpression());
+                        if (tokens[currentToken].type != TokenType::RIGHT_PAREN) {
+                            checkToken(TokenType::COMMA, result);
+                        }
+                    }
+                    checkToken(TokenType::RIGHT_PAREN, result);
+                    //Assignment
                 } else {
                     currentToken--;
                     result->children.push_back(parseAssignment());
                 }
                 break;
-            //WhileLoop
+                //WhileLoop
             case TokenType::WHILE:
                 result->children.push_back(parseWhileLoop());
                 break;
-            //ForLoop
+                //ForLoop
             case TokenType::FOR:
                 result->children.push_back(parseForLoop());
                 break;
-            //IfStatement
+                //IfStatement
             case TokenType::IF:
                 result->children.push_back(parseIfStatement());
                 break;
@@ -377,7 +401,11 @@ public:
 
     Tree *userType() {
         // UserType : ArrayType | RecordType
+
+        std::cout<<"parse User Type\n";
+
         Tree *result = new Tree("User Type");
+
         switch (tokens[currentToken].type) {
             case TokenType::ARRAY:
                 result->children.push_back(parseArrayType());
@@ -394,6 +422,8 @@ public:
     }
 
     Tree *parseRecordType() {
+        std::cout<<"parse Record Type\n";
+
         Tree *result = new Tree("Record Type");
 
         checkToken(TokenType::RECORD, result);
@@ -408,57 +438,94 @@ public:
     //TODO: может не быть размера, если параметры рутины
     Tree *parseArrayType() {
         //ArrayType : array '[' [ Expression ] ']' Type
+
+        std::cout<< "parse Array Type\n";
+
         Tree *result = new Tree("Array Type");
+
         checkToken(TokenType::ARRAY, result);
         checkToken(TokenType::LEFT_BRACKET, result);
         result->children.push_back(parseExpression());
         checkToken(TokenType::RIGHT_BRACKET, result);
         result->children.push_back(parseType());
         result->children.push_back(parseArrayElements());
+
         return result;
     }
 
     Tree *parseArrayElements() {
         //ArrayElements : { ',' Expression }
-        Tree *result = new Tree("Array Elements");
 
-        if (currentToken==TokenType::IS) {
-            checkToken(TokenType::  IS, result);
-            checkToken(TokenType::  LEFT_BRACKET, result);
+        std::cout<< "parse Array Elements\n";
+
+        Tree *result = new Tree("Array Elements");
+        if (tokens[currentToken].type == TokenType::IS) {
+            checkToken(TokenType::IS, result);
+            checkToken(TokenType::LEFT_BRACKET, result);
             while (tokens[currentToken].type != TokenType::RIGHT_BRACKET) {
                 result->children.push_back(parseExpression());
                 checkToken(TokenType::COMMA, result);
             }
-            checkToken(TokenType::  RIGHT_BRACKET, result);
+            checkToken(TokenType::RIGHT_BRACKET, result);
         }
 
         return result;
     }
 
+//    Tree *parseAccessingArrayElement() {
+//        std::cout<<"parse Accessing Array Element\n";
+//
+//        Tree *result = new Tree("Accessing Array Element");
+//        checkToken(TokenType::LEFT_BRACKET, result);
+//        result->children.push_back(parseExpression());
+//        checkToken(TokenType::RIGHT_BRACKET, result);
+//
+//        return result;
+//    }
+
     Tree *parseAssignment() {
 //      Assignment : ModifiablePrimary ':=' Expression
+        std::cout << "parse Assignment\n";
+
         Tree *result = new Tree("Assignment");
+
         result->children.push_back(parseModifiablePrimary());
         checkToken(TokenType::ASSIGNMENT, result);
         result->children.push_back(parseExpression());
+
         return result;
     }
 
     Tree *parseModifiablePrimary() {
 //        ModifiablePrimary
 //        : Identifier { . Identifier | [ Expression ] }
+
+        std::cout << "parse Modifiable Primary\n";
+
         Tree *result = new Tree("Modifiable Primary");
 
         checkToken(TokenType::IDENTIFIER, result);
-        if (tokens[currentToken].type == TokenType::ACCESS_RECORD) {
-            checkToken(TokenType::ACCESS_RECORD, result);
-            checkToken(TokenType::IDENTIFIER, result);
-        } else if (tokens[currentToken].type == TokenType::LEFT_BRACKET) {
-            checkToken(TokenType::LEFT_BRACKET, result);
-            result->children.push_back(parseExpression());
-            checkToken(TokenType::RIGHT_BRACKET, result);
-        } else if (tokens[currentToken].type == TokenType::LEFT_PAREN) {
-            parseRoutineCall();
+        switch (tokens[currentToken].type) {
+            case TokenType::ACCESS_RECORD:
+                checkToken(TokenType::ACCESS_RECORD, result);
+                checkToken(TokenType::IDENTIFIER, result);
+                break;
+            case TokenType::LEFT_BRACKET:
+//                result->children.push_back(parseAccessingArrayElement());
+                checkToken(TokenType::LEFT_BRACKET, result);
+                result->children.push_back(parseExpression());
+                checkToken(TokenType::RIGHT_BRACKET, result);
+                break;
+            case TokenType::LEFT_PAREN:
+                checkToken(TokenType::LEFT_PAREN, result);
+                while (tokens[currentToken].type != TokenType::RIGHT_PAREN) {
+                    result->children.push_back(parseExpression());
+                    if (tokens[currentToken].type != TokenType::RIGHT_PAREN) {
+                        checkToken(TokenType::COMMA, result);
+                    }
+                }
+                checkToken(TokenType::RIGHT_PAREN, result);
+                break;
         }
 
         return result;
@@ -471,6 +538,8 @@ public:
 //                    | false
 //                    | ModifiablePrimary
 //                    | RoutineCall
+
+        std::cout << "Parse Primary\n";
 
         Tree *result = new Tree("Primary");
 
@@ -498,11 +567,19 @@ public:
                 result->children.push_back(parseModifiablePrimary());
                 break;
             case TokenType::LEFT_PAREN:
-                result->children.push_back(parseRoutineCall());
+                checkToken(TokenType::LEFT_PAREN, result);
+                while (tokens[currentToken].type != TokenType::RIGHT_PAREN) {
+                    result->children.push_back(parseExpression());
+                    if (tokens[currentToken].type != TokenType::RIGHT_PAREN) {
+                        checkToken(TokenType::COMMA, result);
+                    }
+                }
+                checkToken(TokenType::RIGHT_PAREN, result);
                 break;
             default:
-                std::cout << "Error: expected sign, 'not', integer literal, real literal, 'true', 'false', identifier or routine call, got "
-                          << tokens[currentToken].lexeme << std::endl;
+                std::cout
+                        << "Error: expected sign, 'not', integer literal, real literal, 'true', 'false', identifier or routine call, got "
+                        << tokens[currentToken].lexeme << std::endl;
                 exit(1);
         }
 
@@ -512,10 +589,12 @@ public:
     Tree *parseRoutineCall() {
 //        RoutineCall
 //          : Identifier [ '(' Expression { ',' Expression } ')' ]
+
+        std::cout << "parse Routine Call\n";
+
         Tree *result = new Tree("Routine Call");
 
-        //TODO: store name of the routine call
-
+        checkToken(TokenType::IDENTIFIER, result);
         checkToken(TokenType::LEFT_PAREN, result);
         if (tokens[currentToken].type != TokenType::RIGHT_PAREN) {
             result->children.push_back(parseExpression());
@@ -531,6 +610,9 @@ public:
 
     Tree *parseSign() {
 //        Sign : '+' | '-'
+
+        std::cout << "Parse Sign\n";
+
         Tree *result = new Tree("Sign");
 
         switch (tokens[currentToken].type) {
@@ -551,8 +633,11 @@ public:
 
     Tree *parseIfStatement() {
         //IfStatement : if Expression then Body [ else Body ] end
+
         std::cout << "parse If Statement\n";
+
         Tree *result = new Tree("If Statement");
+
         checkToken(TokenType::IF, result);
         result->children.push_back(parseExpression());
         checkToken(TokenType::THEN, result);
@@ -562,19 +647,21 @@ public:
             result->children.push_back(parseBody(false));
         }
         checkToken(TokenType::END, result);
+
         return result;
     }
 
     Tree *parseWhileLoop() {
         // WhileLoop : while Expression loop Body end
+
         std::cout << "parse While Loop\n";
 
-        Tree *result = new Tree("while Loop");
+        Tree *result = new Tree("While Loop");
 
         checkToken(TokenType::WHILE, result);
         result->children.push_back(parseExpression());
         checkToken(TokenType::LOOP, result);
-        result->children.push_back(parseBody(false));
+        result->children.push_back(parseBody(true));
         checkToken(TokenType::END, result);
 
         return result;
@@ -582,7 +669,8 @@ public:
 
     Tree *parseExpression() {
         //    Expression : Relation { ( and | or | xor ) Relation } Relation : Simple
-        // may include routine calls
+        //    may include routine calls
+
         std::cout << "parse Expression\n";
 
         Tree *result = new Tree("Expression");
@@ -591,7 +679,7 @@ public:
         while (tokens[currentToken].type == TokenType::AND ||
                tokens[currentToken].type == TokenType::OR ||
                tokens[currentToken].type == TokenType::XOR ||
-                tokens[currentToken].type == TokenType::COMMA) {
+               tokens[currentToken].type == TokenType::COMMA) {
             switch (tokens[currentToken].type) {
                 case TokenType::AND:
                     checkToken(TokenType::AND, result);
@@ -612,11 +700,13 @@ public:
             }
             result->children.push_back(parseRelation());
         }
+
         return result;
     };
 
-    Tree *parseRelation () {
+    Tree *parseRelation() {
         //Relation : Simple [ ( '<' | '<=' | '>' | '>=' | '=' | '/=' ) Simple ]
+
         std::cout << "parse Relation\n";
 
         Tree *result = new Tree("Relation");
@@ -738,6 +828,7 @@ public:
 
     Tree *parseRange() {
         //Range : Expression '..' Expression
+
         std::cout << "parse Range\n";
 
         Tree *result = new Tree("Range");
@@ -751,6 +842,7 @@ public:
 
     Tree *parseForLoop() {
         // ForLoop : for Identifier in [ reverse ] Range loop Body end
+
         std::cout << "parse For Loop\n";
 
         Tree *result = new Tree("For Loop");
