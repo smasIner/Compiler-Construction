@@ -3,6 +3,7 @@
 //
 #include "./LexicalAnalyzer/LexicalAnalyzer.cpp"
 #include "./SyntaxAnalyzer/SyntaxAnalyzer.cpp"
+#include "./SemanticAnalyzer/SemanticAnalyzer.cpp"
 #include <iostream>
 
 
@@ -41,9 +42,13 @@ int main(int argc, char* argv[]) {
     std::cout << "\nStarting syntax analysis...\n";
 
     SyntaxAnalyzer syntaxAnalyzer(tokens);
-    Tree *result_tree = syntaxAnalyzer.parse();
-    std::cout << "\nResult tree:\n";
-    result_tree->print();
+    Tree *syntax_tree = syntaxAnalyzer.parse();
+    syntax_tree->print("; ");
+
+    std::cout << "\nStarting semantic analysis...\n";
+    SemanticAnalyzer semanticAnalyzer(syntax_tree);
+    Tree *semantic_tree = semanticAnalyzer.analyze();
+    semantic_tree->print("");
 
 
     return 0;
