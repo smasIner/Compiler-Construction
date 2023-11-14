@@ -496,18 +496,21 @@ public:
         Tree *result = new Tree("Modifiable Primary");
 
         checkToken(TokenType::IDENTIFIER, result);
-        switch (tokens[currentToken].type) {
-            case TokenType::ACCESS_RECORD:
-                checkToken(TokenType::ACCESS_RECORD, result);
-                checkToken(TokenType::IDENTIFIER, result);
-                break;
-            case TokenType::LEFT_BRACKET:
-                checkToken(TokenType::LEFT_BRACKET, result);
-                result->children.push_back(parseExpression());
-                checkToken(TokenType::RIGHT_BRACKET, result);
-                break;
-        }
+        while (tokens[currentToken].type == TokenType::ACCESS_RECORD ||
+               tokens[currentToken].type == TokenType::LEFT_BRACKET) {
+            switch (tokens[currentToken].type) {
+                case TokenType::ACCESS_RECORD:
+                    checkToken(TokenType::ACCESS_RECORD, result);
+                    result->children.push_back(parseModifiablePrimary());
+                    break;
+                case TokenType::LEFT_BRACKET:
+                    checkToken(TokenType::LEFT_BRACKET, result);
+                    result->children.push_back(parseExpression());
+                    checkToken(TokenType::RIGHT_BRACKET, result);
+                    break;
+            }
 
+        }
         return result;
     }
 
@@ -527,9 +530,14 @@ public:
             case TokenType::ADD:
             case TokenType::SUBTRACT:
                 result->children.push_back(parseSign());
+                if (tokens[currentToken].type==TokenType::INTEGER_LITERAL)
+                    checkToken(TokenType::INTEGER_LITERAL, result);
+                else
+                    checkToken(TokenType::REAL_LITERAL, result);
                 break;
             case TokenType::NOT:
                 checkToken(TokenType::NOT, result);
+                checkToken(TokenType::INTEGER_LITERAL, result);
                 break;
             case TokenType::INTEGER_LITERAL:
                 checkToken(TokenType::INTEGER_LITERAL, result);
