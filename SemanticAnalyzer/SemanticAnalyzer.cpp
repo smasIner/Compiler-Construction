@@ -29,23 +29,41 @@ public:
         this->global_context->types.push_back(new Type("record"));
     }
 
-    bool checkRoutineExists(const std::string &name, bool should_exists) {
+    Routine *checkRoutineExists(const std::string &name, bool should_exists) {
         bool exists = false;
-        for (const Routine *routine: this->global_context->routines) {
-            if (routine->name == name) {
-                exists = true;
-                break;
+        if (should_exists) {
+            for (Routine *routine: this->global_context->routines) {
+                if (routine->name == name) {
+                    return routine;//should exists = true; exists = true;
+                }
             }
+            std::cout << "Routine " << name << " is not declared" << std::endl;
+            exit(1);
+        } else {
+            for (Routine *routine: this->global_context->routines) {
+                if (routine->name == name) {
+                    exists = true;
+                    break;
+                }
+            }
+
         }
 
-        if (should_exists == exists and exists == true or should_exists == exists and exists == false) {
-            return true;
-        } else if (should_exists == false and exists == true) {
+        if (!exists) {
+            return nullptr;
+        } else {
             std::cout << "Routine with name " << name << " is already declared! Terminating..." << std::endl;
-        } else if (should_exists == true and exists == false) {
-            std::cout << "Routine " << name << " does not exist! Terminating..." << std::endl;
+            exit(1);
         }
-        exit(1);
+
+//        if (should_exists == exists and exists == true or should_exists == exists and exists == false) {
+//            return true;
+//        } else if (should_exists == false and exists == true) {
+//            std::cout << "Routine with name " << name << " is already declared! Terminating..." << std::endl;
+//        } else if (should_exists == true and exists == false) {
+//            std::cout << "Routine " << name << " does not exist! Terminating..." << std::endl;
+//        }
+//        exit(1);
     }
 
     Variable *checkVariableExists(const std::string &name, bool should_exists, Context *context) {
@@ -126,6 +144,25 @@ public:
         return result_tree;
     }
 
+//    Expression *conversion (Expression *value, Type *type) {
+//        if (value->type() == type->name) {
+//            return value;
+//        } else if (value->type() == "integer" and type->name == "real") {
+//            return new Expression(std::to_string(std::stod(value->repr(0))));
+//
+//        } else if (value->type->name == "real" and type->name == "integer") {
+//            auto *new_value = new Expression();
+//            new_value->type = type;
+//            new_value->value = value->value;
+//            return new_value;
+//        } else {
+//            std::cout << "Cannot convert " << value->type->name << " to " << type->name << std::endl;
+//            exit(1);
+//        }
+//    }
+//
+//    }
+//
 // -----------------------------------------------------------------------------------
     Variable *analyzeVariableDeclaration(Tree *root, Context *context) {
         print("var");
@@ -135,11 +172,12 @@ public:
 
         for (Tree *child: root->children) {
             if (child->name == "Type") {
-                Type *cand_type = analyzeType(child, context);
+                Type *cand_type = checkTypeExists(analyzeType(child, context)->name, true, context);
                 variable->type = cand_type;
             } else if (child->name == "Expression") {
                 // TODO: check value type
                 variable->value = analyzeExpression(child, context);
+                //variable->value=conversion(variable->value, variable->type);
             }
         }
         context->variables.push_back(variable);
@@ -147,7 +185,6 @@ public:
         return variable;
     }
 
-//TODO: id is already declared
     Type *analyzeTypeDeclaration(Tree *root, Context *context) {
         print("typedec");
         checkTypeExists(root->name, false, context);
@@ -173,6 +210,7 @@ public:
         for (Tree *child: root->children) {
             if (child->name == "Routine Parameters") {
                 routine->parameters = analyzeParameters(child);
+                //routine->parameters[i]->type
                 routine_context->parameters = routine->parameters;
             } else if (child->name == "Type") {
                 routine->return_type = analyzeType(child, context);
@@ -244,7 +282,7 @@ public:
             if (child->name == "record" || child->name == "end") {
                 continue;
             } else {
-                analyzeVariableDeclaration(child, type->record_context);
+                analyzeVariableDeclaration(child, context->joinContexts(type->record_context));
             }
         }
 
@@ -472,18 +510,35 @@ public:
         return while_loop;
     }
 
+    void checkParametersArguments(std::vector<Expression *> expressions, std::vector<Variable *> parameters, std::string name) {
+        if (expressions.size() != parameters.size()) {
+            std::cout<<"Number of parameters and arguments in "<<name<<" do not match"<<std::endl;
+            exit(1);
+        }
+//        for (int i = 0; i < expressions.size(); i++) {
+//            if (expressions[i]->type != parameters[i]->type) {
+//                std::cout<<"Parameter and argument types in "<<name<<"  do not match"<<std::endl;
+//                exit(1);
+//            }
+//        }
+    }
+
     RoutineCall *analyzeRoutineCall(Tree *root, Context *context) {
         print("routinecall");
-        checkRoutineExists(root->children[0]->name, true);
+        Routine *routine = checkRoutineExists(root->children[0]->name, true);
         RoutineCall *routine_call = new RoutineCall();
 
+        int num_expressions = 0;
         for (Tree *child: root->children) {
             if (child->type == TokenType::IDENTIFIER) {
                 routine_call->name = child->name;
             } else if (child->name == "Expression") {
                 routine_call->expressions.push_back(analyzeExpression(child, context));
+                num_expressions++;
             }
         }
+
+        checkParametersArguments(routine_call->expressions, routine->parameters, routine->name);
 
         return routine_call;
     }

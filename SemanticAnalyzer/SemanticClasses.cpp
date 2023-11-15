@@ -268,6 +268,15 @@ public:
             return exprToStr(expression, num);
         }
     }
+
+    std::string type () {
+        if (primary != nullptr) {
+            return primary->value_type;
+        }
+        else {
+            //return expression->type();
+        }
+    }
 };
 
 class Factor {
@@ -279,53 +288,19 @@ public:
         if (summands.size() == 1) {
             return summands[0]->repr(num);
         } else {
-//            Summand *result = new Summand();
-//            for (int i=0; i<summands.size()-1; i++) {
-//                if (operators[0] == "+") {
-//                    result = addition (summands[0], summands[1]);
-//                } else {
-//                    //subtraction (summands[0], summands[1]);
-//                }
-//                summands.erase(summands.begin());
-//                operators.erase(operators.begin());
-//                summands[0]=result;
-//            }
-//            return summands[0]->repr(num);
+            return "not implemented";
         }
     }
 
-//    Summand *addition (Summand *summand1, Summand *summand2) {
-//        Summand *result = new Summand();
-//        if (summand1->primary != nullptr) {
-//            if (summand2->primary != nullptr) {
-//                result->primary->value_type = "integer";
-//                result->primary->integer_value = summand1->primary->integer_value + summand2->primary->integer_value;
-//            } else {
-//                result->primary->value_type = "integer";
-//                result->primary->integer_value = summand1->primary->integer_value + summand2->expression->integer_value;
-//            }
-//        } else {
-//            if (summand2->primary != nullptr) {
-//                result->primary->value_type = "integer";
-//                result->primary->integer_value = summand1->expression->integer_value + summand2->primary->integer_value;
-//            } else {
-//                result->primary->value_type = "integer";
-//                result->primary->integer_value = summand1->expression->integer_value + summand2->expression->integer_value;
-//            }
-//        }
-//        return result;
-//    }
+    std::string type () {
+        if (summands.size() == 1) {
+            return summands[0]->type();
+        }
+        else {
+            return nullptr;
+        }
+    }
 
-//my addition:
-//    Summand *addition (Summand *summand1, Summand *summand2) {
-//        Summand *result = new Summand();
-//        if (summand1->primary->value_type == summand2->primary->value_type
-//        and summand2->primary->value_type == "integer") {
-//            result->primary->value_type = "integer";
-//            result->primary->integer_value = summand1->primary->integer_value+summand2->primary->integer_value;
-//            return result;
-//        }
-//    }
 };
 
 class Simple {
@@ -340,6 +315,15 @@ public:
             return "not implemented";
         }
     }
+
+    std::string type () {
+        if (factors.size() == 1) {
+            return factors[0]->type();
+        }
+        else {
+            return nullptr;
+        }
+    }
 };
 
 class Relation {
@@ -352,6 +336,15 @@ public:
             return simples[0]->repr(num);
         } else {
             return "not implemented";
+        }
+    }
+
+    std::string type () {
+        if (simples.size() == 1) {
+            return simples[0]->type();
+        }
+        else {
+            return nullptr;
         }
     }
 };
@@ -371,6 +364,15 @@ public:
 //        }
         else {
             return "not implemented";
+        }
+    }
+
+    std::string type () {
+        if (relations.size() == 1) {
+            return relations[0]->type();
+        }
+        else {
+            return nullptr;
         }
     }
 };

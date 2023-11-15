@@ -659,8 +659,7 @@ public:
         result->children.push_back(parseRelation());
         while (tokens[currentToken].type == TokenType::AND ||
                tokens[currentToken].type == TokenType::OR ||
-               tokens[currentToken].type == TokenType::XOR ||
-               tokens[currentToken].type == TokenType::COMMA) {
+               tokens[currentToken].type == TokenType::XOR) {
             switch (tokens[currentToken].type) {
                 case TokenType::AND:
                     checkToken(TokenType::AND, result);
@@ -671,9 +670,9 @@ public:
                 case TokenType::XOR:
                     checkToken(TokenType::XOR, result);
                     break;
-                case TokenType::COMMA:
-                    checkToken(TokenType::COMMA, result);
-                    break;
+                //case TokenType::COMMA:
+                    //checkToken(TokenType::COMMA, result);
+                    //break;
                 default:
                     std::cout << "Error: expected 'and', 'or', 'xor', or comma, got "
                               << tokens[currentToken].lexeme << std::endl;
