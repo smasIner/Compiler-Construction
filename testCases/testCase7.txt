@@ -15,7 +15,8 @@ routine isPrime(num: integer): boolean is
 end
 
 routine main() is
+    var i: integer
 	for i in 1..n loop
-		isPrimeArray := isPrime(i)       
+		isPrimeArray := isPrime(i)
         end
 end
