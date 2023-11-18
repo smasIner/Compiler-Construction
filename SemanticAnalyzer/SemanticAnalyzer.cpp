@@ -55,15 +55,6 @@ public:
             std::cout << "Routine with name " << name << " is already declared! Terminating..." << std::endl;
             exit(1);
         }
-
-//        if (should_exists == exists and exists == true or should_exists == exists and exists == false) {
-//            return true;
-//        } else if (should_exists == false and exists == true) {
-//            std::cout << "Routine with name " << name << " is already declared! Terminating..." << std::endl;
-//        } else if (should_exists == true and exists == false) {
-//            std::cout << "Routine " << name << " does not exist! Terminating..." << std::endl;
-//        }
-//        exit(1);
     }
 
     Variable *checkVariableExists(const std::string &name, bool should_exists, Context *context) {
@@ -90,7 +81,6 @@ public:
             }
         }
 
-        //TODO
         if (!exists) {
             return nullptr;
         } else {
@@ -100,12 +90,13 @@ public:
 
     }
 
-    Type *checkTypeExists(const std::string &name, bool should_exists, Context *context) {
+    Type *checkTypeExists(Type *check_type, bool should_exists, Context *context) {
+        std::string name = check_type->name;
         bool exists = false;
         if (should_exists) {
             for (Type *type: context->types) {
                 if (type->name == name) {
-                    return type;//should exists = true; exists = true;
+                    return check_type;//should exists = true; exists = true;
                 }
             }
             std::cout << "Type " << name << " is not declared" << std::endl;
@@ -119,7 +110,6 @@ public:
             }
         }
 
-        //TODO
         if (!exists) {
             return nullptr;
         } else {
@@ -128,6 +118,33 @@ public:
         }
 
     }
+
+    int checkArraySize(Expression *expression) {
+        double result;
+        result = expression->calculate();
+        if (compile_time == false) {
+            std::cout << "Array size must be compile-time" << std::endl;
+            exit(1);
+        }
+        print("ARRAY SIZE: " + std::to_string(result));
+        compile_time = true;
+        return result;
+
+    }
+
+    int checkArrayIndex(Expression *expression, int array_length) {
+        double result;
+        result = expression->calculate();
+        if (compile_time == true and (array_length < result or result<=0)) {
+            std::cout << "Array index is out of bounds" << std::endl;
+            exit(1);
+        }
+
+        print("ARRAY INDEX: " + std::to_string(result)+(!compile_time?" + some variable(s)":""));
+        compile_time = true;
+        return result;
+    }
+
 
     Tree *analyze() {
         for (Tree *child: syntax_tree->children) {
@@ -172,10 +189,9 @@ public:
 
         for (Tree *child: root->children) {
             if (child->name == "Type") {
-                Type *cand_type = checkTypeExists(analyzeType(child, context)->name, true, context);
+                Type *cand_type = checkTypeExists(analyzeType(child, context), true, context);
                 variable->type = cand_type;
             } else if (child->name == "Expression") {
-                // TODO: check value type
                 variable->value = analyzeExpression(child, context);
                 //variable->value=conversion(variable->value, variable->type);
             }
@@ -187,7 +203,7 @@ public:
 
     Type *analyzeTypeDeclaration(Tree *root, Context *context) {
         print("typedec");
-        checkTypeExists(root->name, false, context);
+        checkTypeExists(new Type(root->name), false, context);
         Type *type = new Type();
 
         for (Tree *child: root->children) {
@@ -261,7 +277,8 @@ public:
 
         for (Tree *child: root->children) {
             if (child->name == "Expression") {
-                type->array_length = analyzeExpression(child, context);
+                type->array_length_expr = analyzeExpression(child, context);
+                type->array_length_int = checkArraySize(type->array_length_expr);
             } else if (child->name == "Type") {
                 type->array_type = analyzeType(child, context);
             }
@@ -377,40 +394,42 @@ public:
             } else if (child->type == TokenType::INTEGER_LITERAL) {
                 primary->value_type = "integer";
                 int value = std::stoi(child->name);
-                primary->integer_value = value;
+                primary->value = value;
             } else if (child->type == TokenType::REAL_LITERAL) {
                 primary->value_type = "real";
                 double value = std::stod(child->name);
-                primary->real_value = value;
+                primary->value = value;
             } else if (child->name == "true") {
                 primary->value_type = "boolean";
-                primary->boolean_value = true;
+                primary->value = true;
             } else if (child->name == "false") {
                 primary->value_type = "boolean";
-                primary->boolean_value = false;
+                primary->value = false;
+            }else if (child->name == "Sign") {
+                primary->sign = (child->children[0]->name == "-"? -1 : 1);
             }
         }
 
         return primary;
     }
 
-    // std::string name;
-    //    std::string value;
-    //    Type *type = nullptr;
-    //    std::vector<Expression *> expressions = std::vector<Expression *>();
-
     ModifiablePrimary *analyzeModifiablePrimary(Tree *root, Context *context) {
         print("modifiableprimary");
-        checkVariableExists(root->children[0]->name, true, context);
+        Variable *variable = checkVariableExists(root->children[0]->name, true, context);
         auto *modifiable_primary = new ModifiablePrimary();
-        //assignment->name = context->findVariable(child->children[0]->name)->name;
-        modifiable_primary->name = root->children[0]->name;
 
-        for (Tree *child: root->children) {
-            if (child->name == ".") {
-                //modifiable_primary->variable = analyzeVariable(child);
-            } else if (child->name == "[") {
-                //modifiable_primary->expression = analyzeExpression(child);
+        modifiable_primary->name = variable->name;
+
+        //for (Tree *child: root->children) {
+        for (int i = 0; i < root->children.size(); i++) {
+            if (root->children[i]->name == ".") {
+                modifiable_primary->modifiable_primary_parts.push_back(
+                        new ModifiablePrimaryPart(analyzeModifiablePrimary(root->children[i + 1], context)));
+            } else if (root->children[i]->name == "[") {
+                Expression *expr = analyzeExpression(root->children[i + 1], context);
+                checkArrayIndex(expr, variable->type->array_length_int);
+                modifiable_primary->modifiable_primary_parts.push_back(
+                        new ModifiablePrimaryPart(expr));
             }
         }
 
@@ -466,7 +485,6 @@ public:
 
         for (Tree *child: root->children) {
             if (child->type == TokenType::IDENTIFIER) {
-                //for_loop->variable = context->findVariable(child->name);
                 for_loop->variable = checkVariableExists(child->name, true, context);
             } else if (child->name == "Range") {
                 for_loop->range = analyzeRange(child, context);
@@ -510,9 +528,10 @@ public:
         return while_loop;
     }
 
-    void checkParametersArguments(std::vector<Expression *> expressions, std::vector<Variable *> parameters, std::string name) {
+    void checkParametersArguments(std::vector<Expression *> expressions, std::vector<Variable *> parameters,
+                                  std::string name) {
         if (expressions.size() != parameters.size()) {
-            std::cout<<"Number of parameters and arguments in "<<name<<" do not match"<<std::endl;
+            std::cout << "Number of parameters and arguments in " << name << " do not match" << std::endl;
             exit(1);
         }
 //        for (int i = 0; i < expressions.size(); i++) {
@@ -548,11 +567,14 @@ public:
         Assignment *assignment = new Assignment();
         for (Tree *child: root->children) {
             if (child->name == "Modifiable Primary") {
-                //assignment->name = context->findVariable(child->children[0]->name)->name;
-                assignment->name = checkVariableExists(child->children[0]->name, true, context)->name;
-                assignment->name = child->children[0]->name;
+                Variable *variable = checkVariableExists(child->children[0]->name, true, context);
+                assignment->name = variable->name;
+                if (variable->type->array_length_int != -1) {
+                    Expression *index =analyzeExpression(child->children[2], context);
+                    checkArrayIndex(index, variable->type->array_length_int);
+                    assignment->index = index;
+                }
             } else if (child->name == "Expression") {
-                // TODO: check value type is same as variable type
                 assignment->value = analyzeExpression(child, context);
             }
         }

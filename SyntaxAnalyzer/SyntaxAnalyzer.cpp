@@ -424,7 +424,6 @@ public:
         return result;
     }
 
-    //TODO: может не быть размера, если параметры рутины
     Tree *parseArrayType() {
         //ArrayType : array '[' [ Expression ] ']' Type
 

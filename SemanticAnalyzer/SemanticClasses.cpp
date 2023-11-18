@@ -4,9 +4,13 @@
 #include <utility>
 #include <vector>
 #include <cctype>
+#include <cmath>
 
 
 // Definitions
+
+bool compile_time=true;
+
 class Type;
 
 class RoutineCall;
@@ -58,7 +62,7 @@ public:
 
     Context() = default;
 
-    Context *joinContexts (Context *other) {
+    Context *joinContexts(Context *other) {
         Context *result = new Context();
         result->parameters = parameters;
         result->variables = variables;
@@ -126,13 +130,13 @@ public:
 
 class ModifiablePrimaryPart {
 public:
-    Variable *variable = nullptr;
+    ModifiablePrimary *modifiable_primary = nullptr;
     Expression *expression = nullptr;
 
     ModifiablePrimaryPart() = default;
 
-    explicit ModifiablePrimaryPart(Variable *variable) {
-        this->variable = variable;
+    explicit ModifiablePrimaryPart(ModifiablePrimary *modifiable_primary) {
+        this->modifiable_primary = modifiable_primary;
     }
 
     explicit ModifiablePrimaryPart(Expression *expression) {
@@ -147,6 +151,8 @@ std::string typeToStr(Type *type, int num);
 std::string exprToStr(Expression *expr, int num);
 
 std::string bodyToStr(Body *body, int num);
+
+double exprCalculate (Expression *expr);
 
 // Declarations
 class Variable : public BodyPart {
@@ -170,7 +176,8 @@ class Type : public BodyPart {
 public:
     std::string type;
     std::string name;
-    Expression *array_length = nullptr;
+    Expression *array_length_expr = nullptr;
+    int array_length_int = -1;
     Type *array_type = nullptr;
     Context *record_context = new Context();
     //std::vector<Variable *> record_fields = std::vector<Variable *>();
@@ -200,9 +207,8 @@ public:
         std::string result = "\n" + std::string(num, '\t') + "RoutineCall: " + name + "\n";
         result += std::string(num + 1, '\t') + "Arguments:\n";
         for (Expression *expression: expressions) {
-            result += std::string(num + 2, '\t') + exprToStr(expression, num + 2);
+            result += exprToStr(expression, num + 2);
         }
-        result.erase(result.end() - 1);
         return result;
     }
 };
@@ -212,45 +218,52 @@ public:
     std::string name;
     std::vector<ModifiablePrimaryPart *> modifiable_primary_parts = std::vector<ModifiablePrimaryPart *>();
 
+
     std::string repr(int num) {
-        std::string result = "\n" + std::string(num, '\t') + "ModifiablePrimary: " + name + "\n";
+        std::string result =  std::string(num, '\t') + name + "\n";
         for (ModifiablePrimaryPart *modifiable_primary_part: modifiable_primary_parts) {
-            if (modifiable_primary_part->variable != nullptr) {
-                result += std::string(num + 1, '\t') + modifiable_primary_part->variable->repr(num + 1) + "\n";
+            if (modifiable_primary_part->modifiable_primary != nullptr) {
+                result += std::string(num, '\t') + modifiable_primary_part->modifiable_primary->repr(num + 1);
             } else if (modifiable_primary_part->expression != nullptr) {
-                result += std::string(num + 1, '\t') + exprToStr(modifiable_primary_part->expression, num + 1) + "\n";
+                result += std::string(num+1, '\t') + "Index:\n"+exprToStr(modifiable_primary_part->expression, num + 1);
             }
         }
         return result;
     }
 };
 
-//TODO: убрать "expression", остальное сдвинуть влево (assignment)
-
 class Primary {
 public:
     ModifiablePrimary *modifiable_primary = nullptr;
     RoutineCall *routine_call = nullptr;
-    int integer_value;
-    double real_value;
-    bool boolean_value;
+    double value;
     std::string value_type;
+    double sign=1;
 
     std::string repr(int num) {
         if (value_type == "integer") {
-            return std::to_string(integer_value);
+            return std::string(num, '\t') + std::to_string((int) value);
         } else if (value_type == "real") {
-            return std::to_string(real_value);
+            return std::string(num, '\t') + std::to_string(value);
         } else if (value_type == "boolean") {
-            if (boolean_value == true) {
-                return "true";
+            if (value == 0) {
+                return std::string(num, '\t') + "false";
             } else {
-                return "false";
+                return std::string(num, '\t') + "true";
             }
         } else if (modifiable_primary != nullptr) {
             return modifiable_primary->repr(num);
         } else if (routine_call != nullptr) {
             return routine_call->repr(num);
+        }
+    }
+
+    double calculate() {
+        if (value_type == "real" or value_type == "boolean" or value_type == "integer") {
+            return sign*value;
+        } else {
+            compile_time=false;
+            return 0;
         }
     }
 
@@ -269,14 +282,21 @@ public:
         }
     }
 
-    std::string type () {
+    double calculate() {
         if (primary != nullptr) {
-            return primary->value_type;
-        }
-        else {
-            //return expression->type();
+            return primary->calculate();
+        } else {
+            return exprCalculate(expression);
         }
     }
+
+//    std::string type() {
+//        if (primary != nullptr) {
+//            return primary->value_type;
+//        } else {
+//
+//        }
+//    }
 };
 
 class Factor {
@@ -285,21 +305,34 @@ public:
     std::vector<std::string> operators = std::vector<std::string>();
 
     std::string repr(int num) {
-        if (summands.size() == 1) {
-            return summands[0]->repr(num);
-        } else {
-            return "not implemented";
+        std::string result = "";
+        for (int i = 0; i < operators.size(); i++) {
+            result += summands[i]->repr(num);
+            result += "\n"+std::string(num, '\t') + operators[i] + "\n";
         }
+        result += summands[summands.size() - 1]->repr(num);
+        return result;
     }
 
-    std::string type () {
-        if (summands.size() == 1) {
-            return summands[0]->type();
+    double calculate() {
+        double result = summands[0]->calculate();
+        for (int i = 1; i < summands.size(); i++) {
+            if (operators[i - 1] == "+") {
+                result += summands[i]->calculate();
+            } else if (operators[i - 1] == "-") {
+                result -= summands[i]->calculate();
+            }
         }
-        else {
-            return nullptr;
-        }
+        return result;
     }
+
+//    std::string type() {
+//        if (summands.size() == 1) {
+//            return summands[0]->type();
+//        } else {
+//            return nullptr;
+//        }
+//    }
 
 };
 
@@ -309,21 +342,44 @@ public:
     std::vector<std::string> operators = std::vector<std::string>();
 
     std::string repr(int num) {
-        if (factors.size() == 1) {
-            return factors[0]->repr(num);
-        } else {
-            return "not implemented";
+        std::string result = "";
+        for (int i = 0; i < operators.size(); i++) {
+            result += factors[i]->repr(num);
+            result += "\n"+std::string(num, '\t') + operators[i] + "\n";
         }
+        result += factors[factors.size() - 1]->repr(num);
+        return result;
     }
 
-    std::string type () {
-        if (factors.size() == 1) {
-            return factors[0]->type();
+    double calculate() {
+        double result = factors[0]->calculate();
+        for (int i = 1; i < factors.size(); i++) {
+            if (operators[i - 1] == "*") {
+                result *= factors[i]->calculate();
+            } else if (operators[i - 1] == "/") {
+                result /= factors[i]->calculate();
+            } else if (operators[i - 1] == "%") {
+                std::string helper_1 = std::to_string(result);
+                int symbols_after_dot_1 = helper_1.length() - helper_1.find('.') - 1;
+                std::string helper_2 = std::to_string(factors[i]->calculate());
+                int symbols_after_dot_2 = helper_2.length() - helper_2.find('.') - 1;
+                int power = symbols_after_dot_1 > symbols_after_dot_2 ? symbols_after_dot_1 : symbols_after_dot_2;
+                result = int(result * pow(10, power)) %
+                         int(factors[i]->calculate() * pow(10, power));
+                result = double(result)/pow(10, power);
+            }
         }
-        else {
-            return nullptr;
-        }
+        return result;
     }
+
+//    std::string type () {
+//        if (factors.size() == 1) {
+//            return factors[0]->type();
+//        }
+//        else {
+//            return nullptr;
+//        }
+//    }
 };
 
 class Relation {
@@ -332,21 +388,43 @@ public:
     std::vector<std::string> operators = std::vector<std::string>();
 
     std::string repr(int num) {
-        if (simples.size() == 1) {
-            return simples[0]->repr(num);
-        } else {
-            return "not implemented";
+        std::string result = "";
+        for (int i = 0; i < operators.size(); i++) {
+            result += simples[i]->repr(num);
+            result += "\n"+std::string(num, '\t') + operators[i] + "\n";
         }
+        result += simples[simples.size() - 1]->repr(num);
+        return result;
     }
 
-    std::string type () {
-        if (simples.size() == 1) {
-            return simples[0]->type();
+    double calculate() {
+        double result = simples[0]->calculate();
+        for (int i = 1; i < simples.size(); i++) {
+            if (operators[i - 1] == "<") {
+                result = result < simples[i]->calculate();
+            } else if (operators[i - 1] == ">") {
+                result = result > simples[i]->calculate();
+            } else if (operators[i - 1] == "<=") {
+                result = result <= simples[i]->calculate();
+            } else if (operators[i - 1] == ">=") {
+                result = result >= simples[i]->calculate();
+            } else if (operators[i - 1] == "=") {
+                result = result == simples[i]->calculate();
+            } else if (operators[i - 1] == "/>") {
+                result = result != simples[i]->calculate();
+            }
         }
-        else {
-            return nullptr;
-        }
+        return result;
     }
+
+//    std::string type () {
+//        if (simples.size() == 1) {
+//            return simples[0]->type();
+//        }
+//        else {
+//            return nullptr;
+//        }
+//    }
 };
 
 class Expression {
@@ -355,26 +433,40 @@ public:
     std::vector<std::string> operators = std::vector<std::string>();
 
     std::string repr(int num) {
-        if (relations.size() == 1) {
-            return relations[0]->repr(num);
+        std::string result = "";
+        for (int i = 0; i < operators.size(); i++) {
+            result +=  relations[i]->repr(num);
+            result += "\n"+std::string(num, '\t') + operators[i] + "\n";
         }
-//        std::string represesntation = "";
-//        for (Relation *relation: relations) {
-//            represesntation += relation-;
-//        }
-        else {
-            return "not implemented";
-        }
+        result += relations[relations.size() - 1]->repr(num);
+        return result;
     }
 
-    std::string type () {
-        if (relations.size() == 1) {
-            return relations[0]->type();
+    double calculate() {
+        double result = relations[0]->calculate();
+        for (int i = 1; i < relations.size(); i++) {
+            if (operators[i - 1] == "and") {
+                result = result and relations[i]->calculate();
+            } else if (operators[i - 1] == "or") {
+                result = result or relations[i]->calculate();
+            } else if (operators[i - 1] == "xor") {
+                result = (result == true and relations[i]->calculate()==false)
+                        or (result == false and relations[i]->calculate()==true);
+            }
         }
-        else {
-            return nullptr;
-        }
+        return result;
     }
+
+//    std::string type() {
+//        if (relations.size() == 1) {
+//            return relations[0]->type();
+//        }
+//        else {
+//            return nullptr;
+//        }
+//
+//    }
+
 };
 
 class ReturnStatement {
@@ -382,7 +474,7 @@ public:
     Expression *value = nullptr;
 
     std::string repr(int num) {
-        return "\n" + std::string(num, '\t') + "Return Statement: " + value->repr(num);
+        return "\n" + std::string(num, '\t') + "Return Statement:\n" + value->repr(num+1);
     }
 };
 
@@ -405,13 +497,16 @@ public:
 class Assignment : public BodyPart {
 public:
     std::string name;
+    Expression *index = nullptr;
     Expression *value = nullptr;
 
     std::string repr(int num) {
         std::string result =
-                "\n" + std::string(num, '\t') + "Assignment:\n" + std::string(num + 1, '\t') +
-                "Name: " + name + "\n" + std::string(num + 1, '\t') +
-                "Expression: " + value->repr(num + 2);
+                "\n" + std::string(num, '\t') + "Assignment:\n" + std::string(num + 1, '\t')+"Name: " + name + "\n";
+        if (index != nullptr) {
+            result += std::string(num + 2, '\t') + "Index:\n" + index->repr(num + 3) + "\n";
+        }
+        result+= std::string(num + 1, '\t') + "Expression: " + value->repr(num + 2);
         return result;
     }
 };
@@ -423,7 +518,7 @@ public:
 
     std::string repr(int num) {
         std::string result = "\nWhile loop:";
-        result += "\n" + std::string(num, '\t') + "Condition: " + condition->repr(num + 1);
+        result += "\n" + std::string(num, '\t') + "Condition:\n" + condition->repr(num + 2);
         result += "\n" + std::string(num, '\t') + "Body: " + bodyToStr(body, num + 2);
         return result;
     }
@@ -435,7 +530,7 @@ public:
     Expression *end = nullptr;
 
     std::string repr(int num) {
-        return start->repr(num + 1) + " .. " + end->repr(num + 1);
+        return "\n" + start->repr(num + 1)+ "\n" + std::string (num+1, '\t')+"..\n" + end->repr(num + 1);
     }
 };
 
@@ -462,7 +557,7 @@ public:
 
     std::string repr(int num) {
         std::string result = "\n" + std::string(num, '\t') + "If statement:";
-        result += "\n" + std::string(num + 1, '\t') + "Condition: " + condition->repr(num + 1);
+        result += "\n" + std::string(num + 1, '\t') + "Condition:\n" + condition->repr(num + 2);
         result += "\n" + std::string(num + 1, '\t') + "If body: " + bodyToStr(then_body, num + 2);
         if (else_body != nullptr) {
             result += "\n" + std::string(num + 1, '\t') + "Else body: " + bodyToStr(else_body, num + 2);
@@ -513,7 +608,7 @@ public:
         if (parameters.empty()) {
             result += "\n" + std::string(num + 1, '\t') + "Parameters: none";
         } else {
-            result += "\n" + std::string(num + 1, '\t') + "Parameters:";
+            result += "\n" + std::string(num + 1, '\t') + "Parameters:\n";
             for (Variable *parameter: parameters) {
                 result += parameter->repr(num + 2);
             }
@@ -535,7 +630,7 @@ std::string variableToStr(Variable *variable, int num) {
     std::string result = std::string(num, '\t') + "Variable: " + variable->name;
     result += typeToStr(variable->type, num + 1);
     if (variable->value != nullptr) {
-        result += "\n" + std::string(num + 1, '\t') + "Value: " + variable->value->repr(num + 1);
+        result += "\n" + std::string(num + 1, '\t') + "Value: " + variable->value->repr(0);
     }
     return result;
 }
@@ -548,9 +643,10 @@ std::string typeToStr(Type *type, int num) {
     }
 
     if (type->type == "array") {
-        result += "[" + (type->array_length == nullptr ? " " : type->array_length->repr(num + 1)) + "] " +
+        result += "[" + (type->array_length_expr == nullptr ? " " : type->array_length_expr->repr(0)) + "] " +
                   type->array_type->name;
-    } else if (type->type == "record") {
+    }
+    else if (type->type == "record") {
         result += "\n" + std::string(num + 1, '\t') + "Fields:\n";
         for (Variable *field: type->record_context->variables) {
             result += variableToStr(field, num + 2) + "\n";
@@ -561,7 +657,7 @@ std::string typeToStr(Type *type, int num) {
 }
 
 std::string exprToStr(Expression *expr, int num) {
-    std::string result = "Expression: " + expr->repr(num + 1);
+    std::string result = expr->repr(num);
     return result;
 }
 
@@ -589,4 +685,8 @@ std::string bodyToStr(Body *body, int num) {
     }
 
     return result;
+}
+
+double exprCalculate (Expression *expr) {
+    return expr->calculate();
 }
