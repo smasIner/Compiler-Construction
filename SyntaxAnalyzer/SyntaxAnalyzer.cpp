@@ -11,7 +11,7 @@
 class Tree {
 public:
     std::string op;
-    std::string name; //а-ля Primary, identifiers' names
+    std::string name; //identifiers' names
     TokenType type; //token type
     int intValue;
     double realValue;
