@@ -8,7 +8,7 @@
 #include <vector>
 #include <cctype>
 
-// Token type enumeration
+// Token tokenType enumeration
 enum TokenType {
     NULL_TOKEN,
     //1-11
@@ -39,7 +39,7 @@ struct Token {
 };
 
 std::unordered_map<std::string, TokenType> tokenMap = {
-        {"var", VAR}, {"type", TYPE}, {"routine", ROUTINE}, {"record", RECORD},
+        {"var", VAR}, {"tokenType", TYPE}, {"routine", ROUTINE}, {"record", RECORD},
         {"array", ARRAY}, {"integer", INTEGER}, {"real", REAL}, {"boolean", BOOLEAN},
         {"true", TRUE}, {"false", FALSE}, {"while", WHILE}, {"loop", LOOP}, {"end", END},
         {"if", IF}, {"then", THEN}, {"else", ELSE}, {"for", FOR}, {"in", IN},
@@ -182,15 +182,15 @@ std::vector<Token> tokenize(std::istream& input) {
 //    std::vector<Token> tokens = tokenize(inputFile);
 //
 //    for (const Token& token : tokens) {
-//        std::cout << "Type: " << token.type << ", Lexeme: " << token.lexeme;
+//        std::cout << "Type: " << token.tokenType << ", Lexeme: " << token.lexeme;
 //        std::cout << ", Line: " << token.line;
 //
 //        // Print values for INTEGER_LITERAL, REAL_LITERAL, and BOOLEAN_LITERAL
-//        if (token.type == INTEGER_LITERAL) {
+//        if (token.tokenType == INTEGER_LITERAL) {
 //            std::cout << ", Value: " << token.intValue;
-//        } else if (token.type == REAL_LITERAL) {
+//        } else if (token.tokenType == REAL_LITERAL) {
 //            std::cout << ", Value: " << token.realValue;
-//        } else if (token.type == BOOLEAN_LITERAL) {
+//        } else if (token.tokenType == BOOLEAN_LITERAL) {
 //            std::cout << ", Value: " << (token.boolValue ? "true" : "false");
 //        }
 //

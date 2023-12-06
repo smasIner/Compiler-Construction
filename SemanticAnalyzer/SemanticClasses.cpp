@@ -290,7 +290,7 @@ public:
         }
     }
 
-//    std::string type() {
+//    std::string tokenType() {
 //        if (primary != nullptr) {
 //            return primary->value_type;
 //        } else {
@@ -326,9 +326,9 @@ public:
         return result;
     }
 
-//    std::string type() {
+//    std::string tokenType() {
 //        if (summands.size() == 1) {
-//            return summands[0]->type();
+//            return summands[0]->tokenType();
 //        } else {
 //            return nullptr;
 //        }
@@ -372,9 +372,9 @@ public:
         return result;
     }
 
-//    std::string type () {
+//    std::string tokenType () {
 //        if (factors.size() == 1) {
-//            return factors[0]->type();
+//            return factors[0]->tokenType();
 //        }
 //        else {
 //            return nullptr;
@@ -417,9 +417,9 @@ public:
         return result;
     }
 
-//    std::string type () {
+//    std::string tokenType () {
 //        if (simples.size() == 1) {
-//            return simples[0]->type();
+//            return simples[0]->tokenType();
 //        }
 //        else {
 //            return nullptr;
@@ -457,9 +457,9 @@ public:
         return result;
     }
 
-//    std::string type() {
+//    std::string tokenType() {
 //        if (relations.size() == 1) {
-//            return relations[0]->type();
+//            return relations[0]->tokenType();
 //        }
 //        else {
 //            return nullptr;
@@ -600,9 +600,9 @@ public:
         std::string result = std::string(num, '\t') + "Routine: " + name;
 
         if (return_type == nullptr) {
-            result += "\n" + std::string(num + 1, '\t') + "Return type: void";
+            result += "\n" + std::string(num + 1, '\t') + "Return tokenType: void";
         } else {
-            result += "\n" + std::string(num + 1, '\t') + "Return type: " + return_type->name;
+            result += "\n" + std::string(num + 1, '\t') + "Return tokenType: " + return_type->name;
         }
 
         if (parameters.empty()) {

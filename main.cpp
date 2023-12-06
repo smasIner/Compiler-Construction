@@ -2,10 +2,8 @@
 // Created by smash on 15.10.2023.
 //
 #include "./LexicalAnalyzer/LexicalAnalyzer.cpp"
-#include "./SyntaxAnalyzer/SyntaxAnalyzer.cpp"
 #include "./SemanticAnalyzer/SemanticAnalyzer.cpp"
 #include <iostream>
-
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -38,7 +36,6 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
     }
 
-
     std::cout << "\nStarting syntax analysis...\n";
 
     SyntaxAnalyzer syntaxAnalyzer(tokens);
@@ -49,6 +46,10 @@ int main(int argc, char* argv[]) {
     SemanticAnalyzer semanticAnalyzer(syntax_tree);
     Tree *semantic_tree = semanticAnalyzer.analyze();
     semantic_tree->print("");
+
+    //true+5=real
+    //true+5.5=real
+    //bool(true+5.5)=true
 
 
     return 0;

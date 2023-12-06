@@ -6,40 +6,66 @@
 #include <unordered_map>
 #include <vector>
 #include <cctype>
+#include "../SemanticAnalyzer/SemanticClasses.cpp"
 
 //Tree representation
 class Tree {
 public:
     std::string op;
     std::string name; //а-ля Primary, identifiers' names
-    TokenType type; //token type
+    TokenType tokenType; //token tokenType
     int intValue;
     double realValue;
     bool boolValue;
     std::vector<Tree *> children;
 
+    Routine* routine = nullptr;
+    Variable* variable = nullptr;
+    Type* type = nullptr;
+
     Tree() {
         this->op = "";
         this->name = "";
-        this->type = static_cast<TokenType>(NULL);
+        this->tokenType = static_cast<TokenType>(NULL);
         this->intValue = 0;
         this->realValue = 0;
         this->boolValue = false;
     }
 
-//    Tree(std::string name, std::string type) {
-//        this->op = "";
-//        this->name = name;
-//        this->type = type;
-//        this->intValue = 0;
-//        this->realValue = 0;
-//        this->boolValue = false;
-//    }
+    Tree(Routine* routine) {
+        this->op = "";
+        this->name = routine->repr(1);
+        this->tokenType = static_cast<TokenType>(NULL);
+        this->intValue = 0;
+        this->realValue = 0;
+        this->boolValue = false;
+        this->routine = routine;
+    }
+
+    Tree(Variable* variable) {
+        this->op = "";
+        this->name = variableToStr(variable, 1);
+        this->tokenType = static_cast<TokenType>(NULL);
+        this->intValue = 0;
+        this->realValue = 0;
+        this->boolValue = false;
+        this->variable = variable;
+    }
+
+    Tree(Type* type) {
+        this->op = "";
+        this->name = typeToStr(type, 1);
+        this->tokenType = static_cast<TokenType>(NULL);
+        this->intValue = 0;
+        this->realValue = 0;
+        this->boolValue = false;
+        this->type = type;
+    }
 
     Tree(std::string name) {
         this->op = "";
         this->name = name;
-        this->type = static_cast<TokenType>(NULL);
+        this->tokenType = static_cast<TokenType>(NULL);
         this->intValue = 0;
         this->realValue = 0;
         this->boolValue = false;
@@ -48,7 +74,7 @@ public:
     Tree(std::string name, TokenType type) {
         this->op = "";
         this->name = name;
-        this->type = type;
+        this->tokenType = type;
         this->intValue = 0;
         this->realValue = 0;
         this->boolValue = false;
@@ -57,7 +83,7 @@ public:
     Tree(std::string name, TokenType type, int intValue) {
         this->op = "";
         this->name = name;
-        this->type = type;
+        this->tokenType = type;
         this->intValue = intValue;
         this->realValue = 0;
         this->boolValue = false;
@@ -66,7 +92,7 @@ public:
     Tree(std::string name, TokenType type, double realValue) {
         this->op = "";
         this->name = name;
-        this->type = type;
+        this->tokenType = type;
         this->intValue = 0;
         this->realValue = realValue;
         this->boolValue = false;
@@ -75,7 +101,7 @@ public:
     Tree(std::string name, TokenType type, bool boolValue) {
         this->op = "";
         this->name = name;
-        this->type = type;
+        this->tokenType = type;
         this->intValue = 0;
         this->realValue = 0;
         this->boolValue = boolValue;
@@ -88,8 +114,8 @@ public:
         if (this->name != "") {
             std::cout << this->name << sep;
         }
-        if (this->type != static_cast<TokenType>(NULL)) {
-            std::cout << "type: " << this->type << sep;
+        if (this->tokenType != static_cast<TokenType>(NULL)) {
+            std::cout << "tokenType: " << this->tokenType << sep;
         }
         if (this->intValue != 0) {
             std::cout << "intValue: " << this->intValue << sep;
@@ -164,7 +190,7 @@ public:
                     std::cout << "parse End of Input\n";
                     return analyzedTree;
                 default:
-                    std::cout << "Error: expected 'routine', 'var', 'type' or end of input, got "
+                    std::cout << "Error: expected 'routine', 'var', 'tokenType' or end of input, got "
                               << tokens[currentToken].lexeme << std::endl;
                     exit(1);
             }
@@ -178,7 +204,7 @@ public:
         std::cout << "parse Routine Declaration\n";
 
         Tree *result = new Tree();
-        result->type = TokenType::ROUTINE;
+        result->tokenType = TokenType::ROUTINE;
 
         checkToken(TokenType::ROUTINE, result);
 
@@ -270,7 +296,7 @@ public:
         std::cout << "parse Variable Declaration\n";
 
         Tree *result = new Tree();
-        result->type = TokenType::VAR;
+        result->tokenType = TokenType::VAR;
 
         checkToken(TokenType::VAR, result);
         result->name = checkToken(TokenType::IDENTIFIER, result);
@@ -287,12 +313,12 @@ public:
     }
 
     Tree *parseTypeDeclaration() {
-        // TypeDeclaration : type Identifier is Type
+        // TypeDeclaration : tokenType Identifier is Type
 
         std::cout << "parse Type Declaration\n";
 
         Tree *result = new Tree();
-        result->type = TokenType::TYPE;
+        result->tokenType = TokenType::TYPE;
 
         checkToken(TokenType::TYPE, result);
         result->name = checkToken(TokenType::IDENTIFIER, result);
@@ -342,7 +368,7 @@ public:
                 break;
             default:
                 std::cout
-                        << "Error: expected 'boolean', 'integer', 'real', identifier, record type, or array type, got "
+                        << "Error: expected 'boolean', 'integer', 'real', identifier, record tokenType, or array tokenType, got "
                         << tokens[currentToken].lexeme << std::endl;
                 exit(1);
         }
@@ -395,7 +421,7 @@ public:
 //
 //        Tree *result = new Tree("User Type");
 //
-//        switch (tokens[currentToken].type) {
+//        switch (tokens[currentToken].tokenType) {
 //            case TokenType::ARRAY:
 //                result->children.push_back(parseArrayType());
 //                break;

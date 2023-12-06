@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "SemanticClasses.cpp"
+#include "../SyntaxAnalyzer/SyntaxAnalyzer.cpp"
 
 
 void print(std::string s) {
@@ -135,12 +135,12 @@ public:
     int checkArrayIndex(Expression *expression, int array_length) {
         double result;
         result = expression->calculate();
-        if (compile_time == true and (array_length < result or result<=0)) {
+        if (compile_time == true and (array_length < result or result <= 0)) {
             std::cout << "Array index is out of bounds" << std::endl;
             exit(1);
         }
 
-        print("ARRAY INDEX: " + std::to_string(result)+(!compile_time?" + some variable(s)":""));
+        print("ARRAY INDEX: " + std::to_string(result) + (!compile_time ? " + some variable(s)" : ""));
         compile_time = true;
         return result;
     }
@@ -148,32 +148,32 @@ public:
 
     Tree *analyze() {
         for (Tree *child: syntax_tree->children) {
-            if (child->type == TokenType::ROUTINE) {
-                result_tree->children.push_back(new Tree(analyzeRoutineDeclaration(child, global_context)->repr(1)));
-            } else if (child->type == TokenType::VAR) {
+            if (child->tokenType == TokenType::ROUTINE) {
+                result_tree->children.push_back(new Tree(analyzeRoutineDeclaration(child, global_context)));
+            } else if (child->tokenType == TokenType::VAR) {
                 result_tree->children.push_back(
-                        new Tree(variableToStr(analyzeVariableDeclaration(child, global_context), 1)));
-            } else if (child->type == TokenType::TYPE) {
-                result_tree->children.push_back(new Tree(typeToStr(analyzeTypeDeclaration(child, global_context), 1)));
+                        new Tree(analyzeVariableDeclaration(child, global_context)));
+            } else if (child->tokenType == TokenType::TYPE) {
+                result_tree->children.push_back(new Tree(analyzeTypeDeclaration(child, global_context)));
             }
         }
 
         return result_tree;
     }
 
-//    Expression *conversion (Expression *value, Type *type) {
-//        if (value->type() == type->name) {
+//    Expression *conversion (Expression *value, Type *tokenType) {
+//        if (value->tokenType() == tokenType->name) {
 //            return value;
-//        } else if (value->type() == "integer" and type->name == "real") {
+//        } else if (value->tokenType() == "integer" and tokenType->name == "real") {
 //            return new Expression(std::to_string(std::stod(value->repr(0))));
 //
-//        } else if (value->type->name == "real" and type->name == "integer") {
+//        } else if (value->tokenType->name == "real" and tokenType->name == "integer") {
 //            auto *new_value = new Expression();
-//            new_value->type = type;
+//            new_value->tokenType = tokenType;
 //            new_value->value = value->value;
 //            return new_value;
 //        } else {
-//            std::cout << "Cannot convert " << value->type->name << " to " << type->name << std::endl;
+//            std::cout << "Cannot convert " << value->tokenType->name << " to " << tokenType->name << std::endl;
 //            exit(1);
 //        }
 //    }
@@ -193,7 +193,7 @@ public:
                 variable->type = cand_type;
             } else if (child->name == "Expression") {
                 variable->value = analyzeExpression(child, context);
-                //variable->value=conversion(variable->value, variable->type);
+                //variable->value=conversion(variable->value, variable->tokenType);
             }
         }
         context->variables.push_back(variable);
@@ -226,7 +226,7 @@ public:
         for (Tree *child: root->children) {
             if (child->name == "Routine Parameters") {
                 routine->parameters = analyzeParameters(child);
-                //routine->parameters[i]->type
+                //routine->parameters[i]->tokenType
                 routine_context->parameters = routine->parameters;
             } else if (child->name == "Type") {
                 routine->return_type = analyzeType(child, context);
@@ -254,7 +254,7 @@ public:
 
 // -----------------------------------------------------------------------------------
     Type *analyzeType(Tree *root, Context *context) {
-        print("type");
+        print("tokenType");
         Type *type = new Type();
 
         if (root->children[0]->name == "Array Type") {
@@ -391,11 +391,11 @@ public:
                 primary->modifiable_primary = analyzeModifiablePrimary(child, context);
             } else if (child->name == "Routine Call") {
                 primary->routine_call = analyzeRoutineCall(child, context);
-            } else if (child->type == TokenType::INTEGER_LITERAL) {
+            } else if (child->tokenType == TokenType::INTEGER_LITERAL) {
                 primary->value_type = "integer";
                 int value = std::stoi(child->name);
                 primary->value = value;
-            } else if (child->type == TokenType::REAL_LITERAL) {
+            } else if (child->tokenType == TokenType::REAL_LITERAL) {
                 primary->value_type = "real";
                 double value = std::stod(child->name);
                 primary->value = value;
@@ -405,8 +405,8 @@ public:
             } else if (child->name == "false") {
                 primary->value_type = "boolean";
                 primary->value = false;
-            }else if (child->name == "Sign") {
-                primary->sign = (child->children[0]->name == "-"? -1 : 1);
+            } else if (child->name == "Sign") {
+                primary->sign = (child->children[0]->name == "-" ? -1 : 1);
             }
         }
 
@@ -441,11 +441,11 @@ public:
         Body *body = new Body();
 
         for (Tree *child: root->children) {
-            if (child->type == TokenType::VAR) {
+            if (child->tokenType == TokenType::VAR) {
                 Variable *variable = analyzeVariableDeclaration(child, context->joinContexts(body->context));
                 body->context->variables.push_back(variable);
                 body->body_parts.push_back(new BodyPart(variable));
-            } else if (child->type == TokenType::TYPE) {
+            } else if (child->tokenType == TokenType::TYPE) {
                 Type *type = analyzeTypeDeclaration(child, context->joinContexts(body->context));
                 body->context->types.push_back(type);
                 body->body_parts.push_back(new BodyPart(type));
@@ -484,7 +484,7 @@ public:
         auto *for_loop = new ForLoop();
 
         for (Tree *child: root->children) {
-            if (child->type == TokenType::IDENTIFIER) {
+            if (child->tokenType == TokenType::IDENTIFIER) {
                 for_loop->variable = checkVariableExists(child->name, true, context);
             } else if (child->name == "Range") {
                 for_loop->range = analyzeRange(child, context);
@@ -535,7 +535,7 @@ public:
             exit(1);
         }
 //        for (int i = 0; i < expressions.size(); i++) {
-//            if (expressions[i]->type != parameters[i]->type) {
+//            if (expressions[i]->tokenType != parameters[i]->tokenType) {
 //                std::cout<<"Parameter and argument types in "<<name<<"  do not match"<<std::endl;
 //                exit(1);
 //            }
@@ -549,7 +549,7 @@ public:
 
         int num_expressions = 0;
         for (Tree *child: root->children) {
-            if (child->type == TokenType::IDENTIFIER) {
+            if (child->tokenType == TokenType::IDENTIFIER) {
                 routine_call->name = child->name;
             } else if (child->name == "Expression") {
                 routine_call->expressions.push_back(analyzeExpression(child, context));
@@ -570,7 +570,7 @@ public:
                 Variable *variable = checkVariableExists(child->children[0]->name, true, context);
                 assignment->name = variable->name;
                 if (variable->type->array_length_int != -1) {
-                    Expression *index =analyzeExpression(child->children[2], context);
+                    Expression *index = analyzeExpression(child->children[2], context);
                     checkArrayIndex(index, variable->type->array_length_int);
                     assignment->index = index;
                 }
